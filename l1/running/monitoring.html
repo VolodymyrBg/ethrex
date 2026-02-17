@@ -238,7 +238,7 @@
 
 </style>
 <h1 id="monitoring-and-metrics"><a class="header" href="#monitoring-and-metrics">Monitoring and Metrics</a></h1>
-<p>Ethrex exposes metrics in Prometheus format on port <code>9090</code> by default. The easiest way to monitor your node is to use the provided Docker Compose stack, which includes Prometheus and Grafana preconfigured.</p>
+<p>Ethrex exposes metrics in Prometheus format on port <code>9090</code> by default. But the easiest way to monitor your node is to use the provided Docker Compose stack, which includes Prometheus and Grafana preconfigured. For that we are currently using port <code>3701</code>, this will match the default in the future but for now if running the containers we expected to have the ethrex metrics exposed on port <code>3701</code>.</p>
 <h2 id="quickstart-monitoring-stack-with-docker-compose"><a class="header" href="#quickstart-monitoring-stack-with-docker-compose">Quickstart: Monitoring Stack with Docker Compose</a></h2>
 <ol>
 <li>
@@ -249,11 +249,51 @@ cd ethrex/metrics
 </li>
 <li>
 <p><strong>Start the monitoring stack:</strong></p>
-<pre><code class="language-sh">docker compose -f docker-compose-metrics.yaml -f docker-compose-metrics-l1.overrides.yaml up -d
+<pre><code class="language-sh"># Optional: if you have updated from a previous version, stop first the docker compose.
+# docker compose -f docker-compose-metrics.yaml -f docker-compose-metrics-l1.overrides.yaml down
+docker compose -f docker-compose-metrics.yaml -f docker-compose-metrics-l1.overrides.yaml up -d
+</code></pre>
+</li>
+</ol>
+<p><em><strong>Note:</strong> You might want to restart the docker containers in case of an update from a previous ethrex version to make sure the latest provisioned configurations are applied:</em></p>
+<ol start="3">
+<li>
+<p><strong>Run ethrex with metrics enabled:</strong></p>
+<p>Make sure to start ethrex with the <code>--metrics</code> flag and set the port to <code>3701</code>:</p>
+<pre><code class="language-sh">ethrex --authrpc.jwtsecret ./secrets/jwt.hex --network hoodi --metrics --metrics.port 3701
 </code></pre>
 </li>
 </ol>
 <p>This will launch Prometheus and Grafana, already set up to scrape ethrex metrics.</p>
+<p><strong>Note: We depend on <code>ethereum-metrics-exporter</code> for some key metrics to define variables on the Grafana dashboards. For it to work properly we need the consensus client to expose its RPC endpoints. For example if you are running lighthouse you may need to add <code>--http</code> and <code>--http-address 0.0.0.0</code> flags to it before the dashboards pick up all metrics. This won't be needed in the near future</strong></p>
+<h2 id="logs"><a class="header" href="#logs">Logs</a></h2>
+<p>Ethrex logs are written to stdout by default. To enable file logging, you must specify the <code>--log.dir</code> argument, with this you'll be able to have Promtail collect the logs and send them to Grafana Loki for log visualization.</p>
+<ul>
+<li><strong>Promtail Configuration:</strong> <code>metrics/provisioning/promtail/promtail.yaml</code></li>
+</ul>
+<p>The promtail configuration expects by default that logs are stored in <code>./logs</code> (relative to the repo root). To correctly see the logs in Grafana, ensure that Promtail can access the logs directory:</p>
+<ul>
+<li>If running via <strong>Docker</strong>, ensure you map a volume to the log directory and pass <code>--log.dir</code> to the container.</li>
+<li>If running <strong>standalone</strong>, use <code>--log.dir ./logs</code> when running ethrex.</li>
+</ul>
+<pre><code class="language-bash">ethrex --log.dir ./logs ...
+</code></pre>
+<p>If you choose to use a different directory, you must set the <code>ETHREX_LOGS_DIR</code> environment variable when running the metrics stack to point to your custom logs directory.</p>
+<pre><code class="language-bash">ETHREX_LOGS_DIR=/path/to/your/logs docker compose -f docker-compose-metrics.yaml -f docker-compose-metrics-l1.overrides.yaml up
+</code></pre>
+<p>You can view the logs in Grafana by navigating to the <a href="../../developers/l1/dashboards.html#logs">logs row</a> in our dashboard.</p>
+<h3 id="running-docker-container-manually"><a class="header" href="#running-docker-container-manually">Running Docker Container Manually</a></h3>
+<p>If you run the <code>ethrex</code> Docker container manually (e.g., <code>docker run ...</code>) or use a custom <code>docker-compose.yaml</code> outside of this repository, you must ensure the logs are accessible to the monitoring stack.</p>
+<p>The <code>ethrex</code> container writes logs to the directory specified by <code>--log.dir</code>. You should mount this directory to a location on your host machine that Promtail can access.</p>
+<p>Example:</p>
+<pre><code class="language-bash">docker run -d \
+  --name ethrex \
+  -v $(pwd)/logs:/data/logs \
+  ghcr.io/lambdaclass/ethrex:main \
+  --datadir /data \
+  --log.dir /data/logs
+</code></pre>
+<p>If you are using the provided monitoring stack in <code>metrics/</code>, it expects logs to be in the <code>logs</code> directory at the root of the repository (or <code>../logs</code> relative to the <code>metrics</code> folder). Ensure your volume mount matches this expectation or update the Promtail volume configuration.</p>
 <h2 id="accessing-metrics-and-dashboards"><a class="header" href="#accessing-metrics-and-dashboards">Accessing Metrics and Dashboards</a></h2>
 <ul>
 <li><strong>Prometheus:</strong> <a href="http://localhost:9091">http://localhost:9091</a></li>
@@ -265,9 +305,13 @@ cd ethrex/metrics
 </ul>
 </li>
 </ul>
-<p>Metrics from ethrex will be available at <code>http://localhost:9090/metrics</code> in Prometheus format.</p>
+<p>Metrics from ethrex will be available at <code>http://localhost:3701/metrics</code> in Prometheus format if you followed <a href="#run-ethrex-with-metrics-enabled">step 3</a>.</p>
+<p>For detailed information on the provided Grafana dashboards, see our <a href="../../developers/l1/dashboards.html">L1 Dashboard document</a>.</p>
 <h2 id="custom-configuration"><a class="header" href="#custom-configuration">Custom Configuration</a></h2>
 <p>Your ethrex setup may differ from the default configuration. Check your endpoints at <code>provisioning/prometheus/prometheus_l1_sync_docker.yaml</code>.</p>
+<p>Also if you have a centralized Prometheus or Grafana setup, you can adapt the provided configuration files to fit your environment, or even stop the docker containers that run Prometheus and/or Grafana leaving only the additional <code>ethereum-metrics-exporter</code> running alongside ethrex to export the metrics to your existing monitoring stack.</p>
+<pre><code class="language-sh">docker compose -f docker-compose-metrics.yaml -f docker-compose-metrics-l1.overrides.yaml up -d ethereum-metrics-exporter 
+</code></pre>
 <hr />
 <p>For manual setup or more details, see the <a href="https://prometheus.io/docs/introduction/overview/">Prometheus documentation</a> and <a href="https://grafana.com/docs/">Grafana documentation</a>.</p>
 
@@ -279,7 +323,7 @@ cd ethrex/metrics
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../l1/fundamentals/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../l1/architecture/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -293,7 +337,7 @@ cd ethrex/metrics
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../l1/fundamentals/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../l1/architecture/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

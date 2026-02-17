@@ -241,22 +241,28 @@
 <p>Ethrex is a minimalist, stable, modular and fast implementation of the Ethereum protocol in <a href="https://www.rust-lang.org/">Rust</a>.
 The client supports running in two different modes:</p>
 <ul>
-<li>As a regular Ethereum execution client</li>
-<li>As a multi-prover ZK-Rollup (supporting SP1, RISC Zero and TEEs), where block execution is proven and the proof sent to an L1 network for verification, thus inheriting the L1's security. Support for based sequencing is currently in the works.</li>
+<li><strong>ethrex L1</strong> - As a regular Ethereum execution client</li>
+<li><strong>ethrex L2</strong> - As a multi-prover ZK-Rollup (supporting SP1, RISC Zero and TEEs), where block execution is proven and the proof sent to an L1 network for verification, thus inheriting the L1's security. Support for based sequencing is currently in the works.</li>
 </ul>
-<p>We call the first one "ethrex L1" and the second one "ethrex L2".</p>
 <h2 id="quickstart-l1"><a class="header" href="#quickstart-l1">Quickstart L1</a></h2>
+<div class="mdbook-alerts mdbook-alerts-caution">
+<p class="mdbook-alerts-title">
+  <span class="mdbook-alerts-icon"></span>
+  caution
+</p>
+<p>Before starting, ensure your hardware meets the <a href="../getting-started/hardware_requirements.html">hardware requirements</a>.</p>
+</div>
 <p>Follow these steps to sync an ethrex node on the Hoodi testnet.</p>
 <h3 id="macos"><a class="header" href="#macos">MacOS</a></h3>
 <p>Install ethrex and lighthouse:</p>
-<pre><code class="language-sh"># install lightouse and ethrex
-brew install lambdaclass/tap/ethrex
-brew install lighthouse
-
-# create secrets directory and jwt secret
+<pre><code class="language-sh"># create secrets directory and jwt secret
 mkdir -p ethereum/secrets/
 cd ethereum/
 openssl rand -hex 32 | tr -d "\n" | tee ./secrets/jwt.hex
+
+# install lighthouse and ethrex
+brew install lambdaclass/tap/ethrex
+brew install lighthouse
 </code></pre>
 <p>On one terminal:</p>
 <pre><code class="language-sh">ethrex --authrpc.jwtsecret ./secrets/jwt.hex --network hoodi
@@ -266,16 +272,23 @@ openssl rand -hex 32 | tr -d "\n" | tee ./secrets/jwt.hex
 </code></pre>
 <h3 id="linux-x86"><a class="header" href="#linux-x86">Linux x86</a></h3>
 <p>Install ethrex and lighthouse:</p>
+<div class="mdbook-alerts mdbook-alerts-note">
+<p class="mdbook-alerts-title">
+  <span class="mdbook-alerts-icon"></span>
+  note
+</p>
+<p>Go to https://github.com/sigp/lighthouse/releases/ and use the latest package there and replace that in the below commands</p>
+</div>
 <pre><code class="language-sh"># create secrets directory and jwt secret
 mkdir -p ethereum/secrets/
 cd ethereum/
 openssl rand -hex 32 | tr -d "\n" | tee ./secrets/jwt.hex
 
-# install lightouse and ethrex
+# install lighthouse and ethrex
 curl -L https://github.com/lambdaclass/ethrex/releases/latest/download/ethrex-linux-x86_64 -o ethrex
 chmod +x ethrex
-curl -LO https://github.com/sigp/lighthouse/releases/download/v7.1.0/lighthouse-v7.1.0-x86_64-unknown-linux-gnu.tar.gz
-tar -xvf lighthouse-v7.1.0-x86_64-unknown-linux-gnu.tar.gz
+curl -LO https://github.com/sigp/lighthouse/releases/download/v8.0.0/lighthouse-v8.0.0-x86_64-unknown-linux-gnu.tar.gz
+tar -xvf lighthouse-v8.0.0-x86_64-unknown-linux-gnu.tar.gz
 </code></pre>
 <p>On one terminal:</p>
 <pre><code class="language-sh">./ethrex --authrpc.jwtsecret ./secrets/jwt.hex --network hoodi
@@ -306,7 +319,7 @@ chmod +x ethrex
 </li>
 <li>
 <p><strong>Interested in deploying your own L2?</strong></p>
-<p>See <a href="../l2/deploy.html">L2 rollup deployment</a> for launching your own rollup, deploying contracts, and interacting with your L2.</p>
+<p>See <a href="../l2/deployment/overview.html">L2 rollup deployment</a> for launching your own rollup, deploying contracts, and interacting with your L2.</p>
 </li>
 <li>
 <p><strong>Looking to contribute or develop?</strong></p>
@@ -322,8 +335,11 @@ chmod +x ethrex
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../landing.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
 
-                            <a rel="next prefetch" href="../getting-started/installation/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../getting-started/hardware_requirements.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -333,8 +349,11 @@ chmod +x ethrex
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../landing.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
 
-                    <a rel="next prefetch" href="../getting-started/installation/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../getting-started/hardware_requirements.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
